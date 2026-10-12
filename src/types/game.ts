@@ -35,6 +35,7 @@ export interface GameEventMap {
   "game:ready": { timestamp: string };
   "game:state-changed": { from: GameState; to: GameState };
   "map:mission-selected": { lessonId: string };
+  "map:mission-open-requested": { lessonId: string };
   // Phaser qahramon missiya nuqtasiga yaqinlashganda yuboradi.
   // Matn (o'zbekcha) React overlay tomonidan registry asosida tuziladi.
   "map:mission-nearby": { lessonId: string; status: LessonStatus };

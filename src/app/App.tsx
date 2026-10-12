@@ -180,6 +180,12 @@ export function App({
     [bridge, transition],
   );
 
+  useEffect(() => {
+    return bridge.subscribe("map:mission-open-requested", ({ lessonId }) => {
+      handleStart(lessonId);
+    });
+  }, [bridge, handleStart]);
+
   const handleBeginCoding = useCallback((): void => {
     const lessonId = activeLessonId;
     if (lessonId === null) {

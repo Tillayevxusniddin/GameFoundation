@@ -38,6 +38,8 @@ export function useModalFocus({
 }: ModalFocusOptions): RefObject<HTMLDivElement> {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previousRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!active) {
@@ -63,7 +65,7 @@ export function useModalFocus({
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") {
@@ -94,7 +96,7 @@ export function useModalFocus({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose, initialFocusRef, active]);
+  }, [active, initialFocusRef]);
 
   // Fokus faqat butunlay yopilganda (unmount) ochgan elementga qaytadi.
   useEffect(() => {

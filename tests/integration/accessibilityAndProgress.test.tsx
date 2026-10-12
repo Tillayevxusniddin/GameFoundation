@@ -96,6 +96,20 @@ describe("modal fokus va klaviatura", () => {
     ).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
+
+  it("modal inputida oddiy harflar yozilganda fokus saqlanadi", () => {
+    renderApp();
+
+    const trigger = screen.getByRole("button", { name: uz.openSettings });
+    fireEvent.click(trigger);
+    const input = screen.getByRole("textbox", { name: uz.playerNameLabel });
+    input.focus();
+    fireEvent.change(input, { target: { value: "s w a d" } });
+    fireEvent.keyDown(input, { key: "s" });
+
+    expect((input as HTMLInputElement).value).toBe("s w a d");
+    expect(document.activeElement).toBe(input);
+  });
 });
 
 describe("progress eksport va import", () => {

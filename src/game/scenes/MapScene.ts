@@ -58,6 +58,10 @@ export class MapScene extends Phaser.Scene {
   private states: Record<string, LessonStatus> = {};
   private nearbyLessonId: string | null = null;
   private reducedMotion = false;
+  private mapActive = true;
+  private readonly handleFocusChange = (): void => {
+    this.syncKeyboardState();
+  };
 
   constructor() {
     super("MapScene");
@@ -78,14 +82,24 @@ export class MapScene extends Phaser.Scene {
     this.createMissionPoints();
     this.setupInput();
     this.subscribeBridge();
+    window.addEventListener("focusin", this.handleFocusChange);
+    window.addEventListener("focusout", this.handleFocusChange);
     this.applyAllStates();
 
     this.bridge?.emit("game:ready", { timestamp: new Date().toISOString() });
   }
 
   update(): void {
+    this.syncKeyboardState();
     this.updateVelocity();
     this.checkProximity();
+  }
+
+  shutdown(): void {
+    window.removeEventListener("focusin", this.handleFocusChange);
+    window.removeEventListener("focusout", this.handleFocusChange);
+    this.pressed.clear();
+    this.bridge = undefined;
   }
 
   private drawBackground(): void {
@@ -163,6 +177,12 @@ export class MapScene extends Phaser.Scene {
         })
         .setOrigin(0.5)
         .setDepth(4);
+      ring.setInteractive({ useHandCursor: true });
+      ring.on("pointerup", () => {
+        this.bridge?.emit("map:mission-open-requested", {
+          lessonId: point.lessonId,
+        });
+      });
       this.visualByLesson.set(point.lessonId, { fill, ring, glyph });
       if (!this.reducedMotion) {
         this.tweens.add({
@@ -207,11 +227,20 @@ export class MapScene extends Phaser.Scene {
     if (keyboard === null || keyboard === undefined) {
       return;
     }
-    this.cursors = keyboard.createCursorKeys();
-    this.keyUp = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    this.keyDown = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-    this.keyLeft = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    this.keyRight = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    keyboard.clearCaptures();
+    this.cursors = {
+      up: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP, false),
+      down: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN, false),
+      left: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT, false),
+      right: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT, false),
+      space: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE, false),
+      shift: keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT, false),
+    };
+    this.keyUp = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W, false);
+    this.keyDown = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S, false);
+    this.keyLeft = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A, false);
+    this.keyRight = keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D, false);
+    this.syncKeyboardState();
   }
 
   private subscribeBridge(): void {
@@ -229,6 +258,33 @@ export class MapScene extends Phaser.Scene {
       this.states = states;
       this.applyAllStates();
     });
+    bridge.subscribe("game:state-changed", ({ to }) => {
+      this.mapActive = to === "map";
+      this.syncKeyboardState();
+      if (this.mapActive) {
+        this.scene.resume();
+      } else {
+        this.pressed.clear();
+        this.hero.body?.stop();
+        this.scene.pause();
+      }
+    });
+  }
+
+  private syncKeyboardState(): void {
+    const keyboard = this.input.keyboard;
+    if (keyboard === null || keyboard === undefined) {
+      return;
+    }
+    const active = document.activeElement;
+    const editing =
+      active instanceof HTMLElement &&
+      (active.matches("input, textarea, select, [contenteditable='true']") ||
+        active.closest("[contenteditable='true']") !== null);
+    const modalOpen =
+      active instanceof HTMLElement &&
+      active.closest("[role='dialog'], [aria-modal='true']") !== null;
+    keyboard.enabled = this.mapActive && !editing && !modalOpen;
   }
 
   private statusOf(lessonId: string): LessonStatus {

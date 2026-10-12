@@ -42,6 +42,10 @@ export function PhaserGame({
   gameFactory,
 }: PhaserGameProps): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const bridgeRef = useRef(bridge);
+  bridgeRef.current = bridge;
+  const gameFactoryRef = useRef(gameFactory);
+  gameFactoryRef.current = gameFactory;
   const statesRef = useRef(states);
   statesRef.current = states;
   const [failed, setFailed] = useState(false);
@@ -53,8 +57,12 @@ export function PhaserGame({
     }
     let handle: GameHandle | null = null;
     let cancelled = false;
-    const factory = gameFactory ?? defaultGameFactory;
-    const created = factory({ container, bridge, states: statesRef.current });
+    const factory = gameFactoryRef.current ?? defaultGameFactory;
+    const created = factory({
+      container,
+      bridge: bridgeRef.current,
+      states: statesRef.current,
+    });
     Promise.resolve(created)
       .then((value) => {
         if (cancelled) {
@@ -75,7 +83,7 @@ export function PhaserGame({
         handle = null;
       }
     };
-  }, [bridge, gameFactory]);
+  }, []);
 
   return (
     <div className="wn-phaser" role="group" aria-label={uz.mapCanvasLabel}>
