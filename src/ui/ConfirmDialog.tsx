@@ -1,8 +1,9 @@
-// docs/05_UI_UX_DESIGN.md — tasdiq oynasi fokusni oladi, Escape bilan yopiladi
-// va yopilganda fokus avvalgi elementga qaytariladi.
+// docs/05_UI_UX_DESIGN.md — tasdiq oynasi fokusni oladi, fokus ichida qoladi,
+// Escape bilan yopiladi va yopilganda fokus avvalgi elementga qaytariladi.
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { uz } from "../i18n/uz";
+import { useModalFocus } from "./useModalFocus";
 
 export interface ConfirmDialogProps {
   title: string;
@@ -20,32 +21,17 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps): JSX.Element {
   const cancelRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    cancelRef.current?.focus();
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      previous?.focus();
-    };
-  }, [onCancel]);
+  const dialogRef = useModalFocus({ onClose: onCancel, initialFocusRef: cancelRef });
 
   return (
     <div className="wn-backdrop">
       <div
+        ref={dialogRef}
         className="wn-confirm"
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
       >
         <h2 className="wn-confirm__title">{title}</h2>
         <p className="wn-confirm__body">{body}</p>

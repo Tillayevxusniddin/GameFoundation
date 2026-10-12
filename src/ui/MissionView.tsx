@@ -26,6 +26,8 @@ import { CodeEditor, PlainTextArea } from "../editor/CodeEditor";
 import type { LanguageId } from "../editor/languages";
 import { SandboxPreview } from "./SandboxPreview";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { useModalFocus } from "./useModalFocus";
+import { soundCueMessage, type SoundCue } from "../assets/audio";
 import { uz, uzMessages } from "../i18n/uz";
 
 export interface MissionIntroProps {
@@ -86,6 +88,7 @@ export interface MissionWorkspaceProps {
   onComplete: (hintsUsed: number) => void;
   onBackToMap: () => void;
   onOpenNextMission?: () => void;
+  onSoundCue?: (cue: SoundCue) => void;
 }
 
 const HINT_KEYS = [uz.hintLevel1, uz.hintLevel2, uz.hintLevel3] as const;
@@ -137,6 +140,83 @@ function errorResult(
   };
 }
 
+interface SuccessDialogProps {
+  manifest: LessonManifest;
+  hintsUsedCount: number;
+  reflectionAnswer: string;
+  onReflectionChange: (value: string) => void;
+  onDismiss: () => void;
+  onBackToMap: () => void;
+  onOpenNextMission?: () => void;
+}
+
+// docs/05_UI_UX_DESIGN.md — muvaffaqiyat oynasi modal: fokus ichida qoladi,
+// Escape bilan yopiladi va fokus ochgan elementga qaytadi. Rangga bog'liq
+// bo'lmagan matnli sarlavha va nishon belgisi saqlanadi.
+function SuccessDialog({
+  manifest,
+  hintsUsedCount,
+  reflectionAnswer,
+  onReflectionChange,
+  onDismiss,
+  onBackToMap,
+  onOpenNextMission,
+}: SuccessDialogProps): JSX.Element {
+  const dialogRef = useModalFocus({ onClose: onDismiss });
+  const badge = manifest.badgeId !== undefined;
+  const next = manifest.nextLessonId;
+
+  return (
+    <div className="wn-backdrop">
+      <div
+        ref={dialogRef}
+        className="wn-success"
+        role="dialog"
+        aria-modal="true"
+        aria-label={uz.successTitle}
+        tabIndex={-1}
+      >
+        <h3 className="wn-success__title">{uz.successTitle}</h3>
+        <p>{manifest.successMessage}</p>
+        <p className="wn-success__xp">
+          {uz.successXpMessage}:{" "}
+          <strong>{hintsUsedCount > 0 ? 80 : 100}</strong> XP
+        </p>
+        {badge ? <p className="wn-success__badge">{uz.badgeEarned}</p> : null}
+        <h4>{uz.reflectionQuestionLabel}</h4>
+        <p className="wn-success__question">{manifest.reflectionQuestion}</p>
+        <label className="wn-sr-label" htmlFor="wn-reflection">
+          {uz.reflectionPlaceholder}
+        </label>
+        <textarea
+          id="wn-reflection"
+          className="wn-reflection"
+          value={reflectionAnswer}
+          placeholder={uz.reflectionPlaceholder}
+          onChange={(event): void => onReflectionChange(event.target.value)}
+        />
+        <div className="wn-success__actions">
+          {next !== undefined && onOpenNextMission !== undefined ? (
+            <button
+              type="button"
+              className="wn-btn wn-btn--primary"
+              onClick={onOpenNextMission}
+            >
+              {uzMessages.nextMissionButton(next)}
+            </button>
+          ) : null}
+          <button type="button" className="wn-btn" onClick={onDismiss}>
+            {uz.closeDialog}
+          </button>
+          <button type="button" className="wn-btn" onClick={onBackToMap}>
+            {uz.backToMap}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MissionWorkspace({
   manifest,
   initialDraft,
@@ -147,6 +227,7 @@ export function MissionWorkspace({
   onComplete,
   onBackToMap,
   onOpenNextMission,
+  onSoundCue,
 }: MissionWorkspaceProps): JSX.Element {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [activeTab, setActiveTab] = useState<MissionTab>("mission");
@@ -166,6 +247,15 @@ export function MissionWorkspace({
   const [hintsUsedCount, setHintsUsedCount] = useState(initialHintsUsed);
   const [showReset, setShowReset] = useState(false);
   const [reflectionAnswer, setReflectionAnswer] = useState("");
+  const [successDismissed, setSuccessDismissed] = useState(false);
+  const [liveMessage, setLiveMessage] = useState("");
+
+  // Audio signal + ekranda matnli takror (aria-live). Audio o'chiq bo'lsa ham
+  // matn ko'rsatiladi.
+  const announce = (cue: SoundCue): void => {
+    setLiveMessage(soundCueMessage(cue));
+    onSoundCue?.(cue);
+  };
 
   const isCombined = manifest.moduleId === "project";
   const extraLanguages = LANGUAGE_ORDER.filter(
@@ -196,6 +286,7 @@ export function MissionWorkspace({
       setRuntimeError(message);
       setValidation(errorResult(manifest.id, message));
       setRunState("error");
+      announce("validation-error");
       return;
     }
     const snapshot = outcome.snapshot;
@@ -207,9 +298,12 @@ export function MissionWorkspace({
     setValidation(result);
     if (result.success) {
       setRunState("success");
+      setSuccessDismissed(false);
       onComplete(hintsUsedCount);
+      announce(manifest.badgeId !== undefined ? "badge-unlocked" : "mission-success");
     } else {
       setRunState("error");
+      announce("validation-error");
     }
   };
   runRef.current = (): Promise<void> => runCode();
@@ -244,6 +338,8 @@ export function MissionWorkspace({
       if (!(next[index] ?? false)) {
         next[index] = true;
         setHintsUsedCount((count) => count + 1);
+        onSoundCue?.("hint-used");
+        setLiveMessage(soundCueMessage("hint-used"));
       } else {
         next[index] = false;
       }
@@ -259,6 +355,7 @@ export function MissionWorkspace({
     setRuntimeError(null);
     setConsoleLines([]);
     setShowReset(false);
+    setSuccessDismissed(false);
     onSaveDraft(starter);
   };
 
@@ -396,48 +493,20 @@ export function MissionWorkspace({
     );
   };
 
-  const renderSuccessPanel = (): JSX.Element | null => {
-    if (runState !== "success") {
+  const renderSuccessDialog = (): JSX.Element | null => {
+    if (runState !== "success" || successDismissed) {
       return null;
     }
-    const badge = manifest.badgeId !== undefined;
-    const next = manifest.nextLessonId;
     return (
-      <div className="wn-success" role="status" aria-live="polite">
-        <h3 className="wn-success__title">{uz.successTitle}</h3>
-        <p>{manifest.successMessage}</p>
-        <p className="wn-success__xp">
-          {uz.successXpMessage}:{" "}
-          <strong>{hintsUsedCount > 0 ? 80 : 100}</strong> XP
-        </p>
-        {badge ? <p className="wn-success__badge">{uz.badgeEarned}</p> : null}
-        <h4>{uz.reflectionQuestionLabel}</h4>
-        <p className="wn-success__question">{manifest.reflectionQuestion}</p>
-        <label className="wn-sr-label" htmlFor="wn-reflection">
-          {uz.reflectionPlaceholder}
-        </label>
-        <textarea
-          id="wn-reflection"
-          className="wn-reflection"
-          value={reflectionAnswer}
-          placeholder={uz.reflectionPlaceholder}
-          onChange={(event): void => setReflectionAnswer(event.target.value)}
-        />
-        <div className="wn-success__actions">
-          {next !== undefined && onOpenNextMission !== undefined ? (
-            <button
-              type="button"
-              className="wn-btn wn-btn--primary"
-              onClick={onOpenNextMission}
-            >
-              {uzMessages.nextMissionButton(next)}
-            </button>
-          ) : null}
-          <button type="button" className="wn-btn" onClick={onBackToMap}>
-            {uz.backToMap}
-          </button>
-        </div>
-      </div>
+      <SuccessDialog
+        manifest={manifest}
+        hintsUsedCount={hintsUsedCount}
+        reflectionAnswer={reflectionAnswer}
+        onReflectionChange={setReflectionAnswer}
+        onDismiss={(): void => setSuccessDismissed(true)}
+        onBackToMap={onBackToMap}
+        onOpenNextMission={onOpenNextMission}
+      />
     );
   };
 
@@ -446,6 +515,9 @@ export function MissionWorkspace({
       className="wn-workspace"
       aria-label={`${manifest.order}-missiya: ${manifest.title}`}
     >
+      <p className="wn-visually-hidden" role="status" aria-live="polite">
+        {liveMessage}
+      </p>
       <div className="wn-tabs" role="tablist" aria-label={uz.missionTabsLabel}>
         {tabs.map((tab) => (
           <button
@@ -585,10 +657,11 @@ export function MissionWorkspace({
             {renderConsole()}
             <h3 className="wn-pane__subtitle">{uz.validatorReportLabel}</h3>
             {renderValidatorReport()}
-            {renderSuccessPanel()}
           </div>
         </article>
       </div>
+
+      {renderSuccessDialog()}
 
       {showReset ? (
         <ConfirmDialog

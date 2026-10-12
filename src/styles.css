@@ -883,3 +883,147 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Phase 5: profil, qulaylik, eksport/import, tozalash va kichik ekran. */
+.wn-text-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #0f1219;
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.wn-settings__section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wn-border);
+}
+
+.wn-settings__section h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.wn-settings__hint {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--wn-muted);
+}
+
+.wn-settings__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.wn-settings__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.wn-settings__success {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #16301f;
+  border: 1px solid #3f7d54;
+  border-radius: 8px;
+  color: #9be0b0;
+}
+
+.wn-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.wn-import-error {
+  margin-top: 10px;
+  padding: 10px;
+  background: #3a1f1f;
+  border: 1px solid #a54444;
+  border-radius: 8px;
+}
+
+.wn-import-error__title {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+/* Kirish (ism) oynasi. */
+.wn-welcome {
+  width: min(480px, 100%);
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.wn-welcome__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0;
+}
+
+.wn-welcome__body {
+  color: var(--wn-muted);
+}
+
+.wn-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Muvaffaqiyat oynasi endi modal sifatida ko'rsatiladi. */
+.wn-success {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+}
+
+/* Kichik ekran ogohlantirishi 768 px dan kichikda ko'rinadi. */
+.wn-small-screen {
+  display: none;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: var(--wn-panel-2);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+}
+
+.wn-small-screen__text {
+  flex: 1 1 auto;
+}
+
+.wn-small-screen__text p {
+  margin: 4px 0 0;
+  font-size: 0.88rem;
+  color: var(--wn-muted);
+}
+
+@media (max-width: 767px) {
+  .wn-small-screen {
+    display: flex;
+  }
+}
+
+/* Foydalanuvchi tanlagan reduced-motion (media query bilan birga ishlaydi). */
+.wn-reduce-motion *,
+.wn-reduce-motion *::before,
+.wn-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+

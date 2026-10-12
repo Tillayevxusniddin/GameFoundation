@@ -6,6 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createEventBridge, type EventBridge } from "./eventBridge";
 import { createStateMachine, type StateMachine } from "./stateMachine";
 import { LocalProgressRepository } from "../progress/LocalProgressRepository";
+import {
+  UiPreferencesStore,
+  type UiPreferences,
+} from "../progress/uiPreferences";
 import type {
   DraftCode,
   LessonStatus,
@@ -15,6 +19,7 @@ import type {
 import type { GameEventMap, GameState } from "../types/game";
 import type { CodeRunner } from "../types/sandbox";
 import { SandboxRunner } from "../security/sandboxRunner";
+import { createAudioPlayer, type AudioPlayer, type SoundCue } from "../assets/audio";
 import { lessonRegistry } from "../content/loader";
 import { uz } from "../i18n/uz";
 import { TopNav } from "../ui/TopNav";
@@ -24,7 +29,9 @@ import {
   MissionWorkspace,
   type EditorMode,
 } from "../ui/MissionView";
-import { SettingsPanel } from "../ui/SettingsPanel";
+import { SettingsModal, type ImportErrorInfo } from "../ui/SettingsModal";
+import { WelcomeDialog } from "../ui/WelcomeDialog";
+import { SmallScreenNotice } from "../ui/SmallScreenNotice";
 import type { GameFactory } from "../game/PhaserGame";
 
 export interface AppProps {
@@ -33,6 +40,8 @@ export interface AppProps {
   gameFactory?: GameFactory;
   runner?: CodeRunner;
   editorMode?: EditorMode;
+  preferences?: UiPreferencesStore;
+  audioPlayer?: AudioPlayer;
 }
 
 function downloadJson(json: string): void {
@@ -54,6 +63,8 @@ export function App({
   gameFactory,
   runner: providedRunner,
   editorMode: providedEditorMode,
+  preferences: providedPreferences,
+  audioPlayer: providedAudioPlayer,
 }: AppProps): JSX.Element {
   const repository = useMemo<ProgressRepository>(
     () => providedRepository ?? new LocalProgressRepository(),
@@ -67,6 +78,14 @@ export function App({
     () => providedRunner ?? new SandboxRunner(),
     [providedRunner],
   );
+  const preferencesStore = useMemo<UiPreferencesStore>(
+    () => providedPreferences ?? new UiPreferencesStore(),
+    [providedPreferences],
+  );
+  const audioPlayer = useMemo<AudioPlayer>(
+    () => providedAudioPlayer ?? createAudioPlayer(),
+    [providedAudioPlayer],
+  );
   const editorMode: EditorMode = providedEditorMode ?? "codemirror";
   const machineRef = useRef<StateMachine>(createStateMachine("loading"));
 
@@ -77,10 +96,19 @@ export function App({
   const [warning, setWarning] = useState<string | null>(() =>
     repository.getWarning(),
   );
+  const [preferences, setPreferences] = useState<UiPreferences>(() =>
+    preferencesStore.load(),
+  );
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [progressJson, setProgressJson] = useState("");
+  const [importError, setImportError] = useState<ImportErrorInfo | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
+
+  useEffect(() => {
+    audioPlayer.setEnabled(preferences.audioEnabled);
+  }, [audioPlayer, preferences.audioEnabled]);
 
   const states = useMemo<Record<string, LessonStatus>>(() => {
     const next: Record<string, LessonStatus> = {};
@@ -168,6 +196,8 @@ export function App({
 
   const handleOpenSettings = useCallback((): void => {
     setProgressJson(repository.exportJson());
+    setImportError(null);
+    setImportSuccess(false);
     setSettingsOpen(true);
   }, [repository]);
 
@@ -184,10 +214,74 @@ export function App({
   const handleImport = useCallback(
     (json: string): void => {
       const next = repository.importJson(json);
+      const currentWarning = repository.getWarning();
       setProgress(next);
-      setWarning(repository.getWarning());
+      if (currentWarning === uz.progressImportInvalid) {
+        setWarning((previous) =>
+          previous === uz.progressImportInvalid ? null : previous,
+        );
+        setImportSuccess(false);
+        setImportError({
+          what: uz.importErrorWhat,
+          why: uz.importErrorWhy,
+          nextStep: uz.importErrorNextStep,
+        });
+      } else {
+        setWarning(currentWarning);
+        setImportError(null);
+        setImportSuccess(true);
+      }
     },
     [repository],
+  );
+
+  const handleSaveName = useCallback(
+    (name: string): void => {
+      setProgress(repository.setPlayerName(name));
+      const next = preferencesStore.update({ introSeen: true });
+      setPreferences(next);
+    },
+    [repository, preferencesStore],
+  );
+
+  const handleSkipWelcome = useCallback((): void => {
+    setPreferences(preferencesStore.update({ introSeen: true }));
+  }, [preferencesStore]);
+
+  const handleToggleAudio = useCallback(
+    (enabled: boolean): void => {
+      setPreferences(preferencesStore.update({ audioEnabled: enabled }));
+    },
+    [preferencesStore],
+  );
+
+  const handleToggleReducedMotion = useCallback(
+    (enabled: boolean): void => {
+      setPreferences(preferencesStore.update({ reducedMotion: enabled }));
+    },
+    [preferencesStore],
+  );
+
+  const handleResetAll = useCallback((): void => {
+    const fresh = repository.resetAll();
+    setProgress(fresh);
+    setWarning(repository.getWarning());
+    setProgressJson(JSON.stringify(fresh));
+    setImportError(null);
+    setImportSuccess(false);
+  }, [repository]);
+
+  const handleDismissSmallScreen = useCallback((): void => {
+    setPreferences(
+      preferencesStore.update({ smallScreenNoticeDismissed: true }),
+    );
+  }, [preferencesStore]);
+
+  const handleSoundCue = useCallback(
+    (cue: SoundCue): void => {
+      audioPlayer.play(cue);
+    },
+    [audioPlayer],
   );
 
   const activeManifest =
@@ -249,8 +343,14 @@ export function App({
     bridge.emit("map:mission-selected", { lessonId: nextId });
   }, [activeManifest, bridge]);
 
+  const showWelcome = !preferences.introSeen;
+
   return (
-    <div className="wn-app">
+    <div
+      className={
+        preferences.reducedMotion ? "wn-app wn-reduce-motion" : "wn-app"
+      }
+    >
       <TopNav
         totalXp={progress.totalXp}
         badgesCount={progress.badges.length}
@@ -266,6 +366,10 @@ export function App({
           <p className="wn-banner" role="status">
             {warning}
           </p>
+        ) : null}
+
+        {!preferences.smallScreenNoticeDismissed ? (
+          <SmallScreenNotice onDismiss={handleDismissSmallScreen} />
         ) : null}
 
         {gameState === "map" ? (
@@ -309,6 +413,7 @@ export function App({
             onOpenNextMission={
               nextManifest !== undefined ? handleOpenNextMission : undefined
             }
+            onSoundCue={handleSoundCue}
           />
         ) : null}
 
@@ -319,10 +424,29 @@ export function App({
         ) : null}
       </main>
 
+      {showWelcome ? (
+        <WelcomeDialog
+          initialName={progress.playerName ?? ""}
+          onSaveName={handleSaveName}
+          onSkip={handleSkipWelcome}
+        />
+      ) : null}
+
       {settingsOpen ? (
-        <SettingsPanel
-          warning={warning}
+        <SettingsModal
+          progress={progress}
           progressJson={progressJson}
+          warning={warning}
+          audioEnabled={preferences.audioEnabled}
+          reducedMotion={preferences.reducedMotion}
+          importError={importError}
+          importSuccess={importSuccess}
+          onSaveName={handleSaveName}
+          onToggleAudio={handleToggleAudio}
+          onToggleReducedMotion={handleToggleReducedMotion}
+          onExport={handleExport}
+          onImport={handleImport}
+          onResetAll={handleResetAll}
           onClose={handleCloseSettings}
         />
       ) : null}

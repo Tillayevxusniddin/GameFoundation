@@ -114,6 +114,7 @@ export const uz = {
     "Ishni bajarildi. Xaritaga qaytib keyingi missiyani ochishingiz mumkin.",
   nextMission: "Keyingi missiya:",
   runPending: "Ishga tushirilmoqda…",
+  closeDialog: "Oynani yopish",
 
   // Qayta tiklash tasdiqi (modal).
   resetConfirmTitle: "Kodni qayta tiklash?",
@@ -178,12 +179,73 @@ export const uz = {
     "Preview hali chizilmagan. Qayta ishga tushirib ko‘ring.",
 
   // Sozlamalar paneli.
-  settingsTitle: "Sozlamalar",
+  settingsTitle: "Sozlamalar va progress",
   exportDescription:
     "Progressni JSON fayl qilib saqlab qo‘ying; faylni keyin qayta yuklash mumkin.",
   importDescription:
-    "Avval eksport qilingan JSON faylni tanlab, progressni tiklang.",
+    "Avval eksport qilingan JSON faylni tanlab yoki nusxasini shu yerga qo‘yib, progressni tiklang.",
   progressJsonLabel: "Progress JSON nusxasi",
+  exportButton: "JSON faylni yuklab olish",
+  importButton: "JSON dan tiklash",
+  importTextLabel: "Tiklanadigan JSON matni",
+  importFileButton: "JSON faylni tanlash",
+  importSuccess: "Progress muvaffaqiyatli tiklandi.",
+  importErrorTitle: "Progressni tiklab bo‘lmadi",
+  importErrorWhat:
+    "Kiritilgan JSON matni o‘qilmadi yoki progress sxemasiga mos kelmadi.",
+  importErrorWhy:
+    "Fayl buzilgan yoki bo‘sh bo‘lishi, yoxud kutilgan maydonlar (schemaVersion, lessons) yetishmasligi mumkin.",
+  importErrorNextStep:
+    "To‘g‘ri eksport qilingan JSON faylni qayta tanlang yoki uning nusxasini to‘liq joylashtiring.",
+
+  // Sozlamalar: ism, audio, harakat, tozalash.
+  playerNameLabel: "Ismingiz (majburiy emas)",
+  playerNamePlaceholder: "Ismingizni yozing",
+  playerNameSave: "Ismni saqlash",
+  playerNameSkip: "Keyinroq",
+  welcomeTitle: "Web Ninja lageriga xush kelibsiz!",
+  welcomeBody:
+    "Xohlasangiz ismingizni kiritasiz. Ism faqat shu qurilmada saqlanadi va hech qayerga yuborilmaydi.",
+  settingsNameSection: "Profil",
+  settingsAccessibilitySection: "Qulaylik",
+  audioToggleLabel: "Audio signallarni yoqish",
+  audioToggleDescription:
+    "Ovoz yoqilmagan. Yoqilsa, natija signallari qisqa tovush bilan beriladi va ekranda matn bilan takrorlanadi.",
+  reducedMotionToggleLabel: "Harakatni kamaytirish",
+  reducedMotionToggleDescription:
+    "Bezak animatsiyalarini o‘chiradi. Brauzer sozlamasi (prefers-reduced-motion) bilan birga ishlaydi.",
+  resetAllLabel: "Barcha progressni tozalash",
+  resetAllDescription:
+    "Barcha missiyalar, XP va nishonlar o‘chiriladi. Ism ham tozalanadi.",
+  resetAllTitle: "Barcha progressni tozalash?",
+  resetAllBody:
+    "Barcha missiya natijalari, XP va nishonlar butunlay o‘chiriladi. Bu amalni ortga qaytarib bo‘lmaydi.",
+  confirmResetAll: "Ha, hammasini tozalash",
+  progressResetDone: "Barcha progress tozalandi.",
+
+  // Kichik ekran ogohlantirishi.
+  smallScreenNoticeTitle: "Kattaroq ekran tavsiya etiladi",
+  smallScreenNoticeBody:
+    "Eng qulay tajriba uchun tablet yoki kompyuterdan foydalaning. Kichik ekranda ham barcha kontent saqlanadi.",
+  smallScreenNoticeDismiss: "Tushundim, yopish",
+
+  // Audio signal matnlari (aria-live takrori).
+  soundMissionSuccess: "Missiya bajarildi.",
+  soundValidationError: "Tekshiruvda xato aniqlandi.",
+  soundHintUsed: "Maslahat ochildi.",
+  soundBadgeUnlocked: "Yangi nishon qo‘lga kiritildi.",
+
+  // Resurs (asset) fallback.
+  assetFallback:
+    "Resurs yuklanmadi. Vaqtinchalik o‘rinbosar ko‘rsatildi, kontent yo‘qolmaydi.",
+  assetUnknown: "Noma’lum resurs identifikatori.",
+
+  // Nishonlar nomlari.
+  badgeLagerTanishuv: "Lager bilan tanishuv",
+  badgeHtmlBoshlovchi: "HTML boshlovchi",
+  badgeCssBogbon: "CSS bog‘bon",
+  badgeJsNinja: "JavaScript ninja",
+  badgeWebNinja: "Web Ninja",
 } as const;
 
 export type UzKey = keyof typeof uz;

@@ -321,6 +321,26 @@ export class LocalProgressRepository implements ProgressRepository {
     return clone(next);
   }
 
+  setPlayerName(name: string): PlayerProgress {
+    const current = this.load();
+    const next: PlayerProgress = clone(current);
+    const trimmed = name.trim().slice(0, 40);
+    if (trimmed.length === 0) {
+      delete next.playerName;
+    } else {
+      next.playerName = trimmed;
+    }
+    this.save(next);
+    return clone(next);
+  }
+
+  resetAll(): PlayerProgress {
+    this.clear();
+    const fresh = createInitialProgress(this.now());
+    this.save(fresh);
+    return clone(fresh);
+  }
+
   exportJson(): string {
     return JSON.stringify(this.load());
   }

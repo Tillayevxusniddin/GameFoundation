@@ -40,6 +40,10 @@ export interface ProgressRepository {
     badgeId?: string,
   ): PlayerProgress;
   saveDraft(lessonId: string, draft: DraftCode): PlayerProgress;
+  // Ixtiyoriy ismni saqlaydi (serverga yuborilmaydi).
+  setPlayerName(name: string): PlayerProgress;
+  // Barcha progress, XP, nishon va ismni tozalab, boshlang'ich holat qaytaradi.
+  resetAll(): PlayerProgress;
   exportJson(): string;
   importJson(json: string): PlayerProgress;
   // Oxirgi ogohlantirish (masalan: buzilgan JSON tiklandi).
