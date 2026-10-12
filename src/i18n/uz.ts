@@ -12,6 +12,9 @@ export const uz = {
   runCode: "Ishga tushirish",
   checkCode: "Tekshirish",
   resetCode: "Qayta tiklash",
+  saveDraft: "Draftni saqlash",
+  runRequestsHint: "Ishga tushirish: Ctrl/Cmd+Enter",
+  saveRequestsHint: "Draftni saqlash: Ctrl/Cmd+S",
   missionLocked: "Qulfli: oldingi missiyani yakunlang",
   missionAvailable: "Mavjud missiya",
   missionCompleted: "Missiya bajarildi",
@@ -74,16 +77,105 @@ export const uz = {
   hintHide: "Maslahatni yopish",
   hintCostNote:
     "Maslahatdan foydalansang, mukofot 100 XP o‘rniga 80 XP bo‘ladi.",
+  hintsUsedLabel: "Ishlatilgan maslahatlar",
   editorPaneLabel: "Muharrir",
-  editorPlaceholder:
-    "Kod muharriri 3-bosqichda CodeMirror bilan ulanadi. Hozircha bu yerda mashq qilishingiz mumkin.",
+  editorPlaceholder: "Kodni shu yerga yozing.",
+  editorLanguageLabel: "Til",
+  combinedEditorsLabel: "Barcha tillar",
   previewPaneLabel: "Natija va tekshiruv",
+  previewTitle: "Preview",
   previewPlaceholder: "Preview natijasi shu yerda ko‘rinadi.",
+  previewEmpty: "Kodni ishga tushirganingizdan so‘ng preview shu yerda ochiladi.",
+  previewLoading: "Preview yuklanmoqda…",
   validatorPlaceholder: "Validator natijasi shu yerda ko‘rinadi.",
+  validatorReportLabel: "Validator natijasi",
+  validatorSuccess: "Barcha tekshiruvlar o‘tdi!",
+  validatorFailedTitle: "Tekshiruv o‘tmadi",
+  validatorIssuesLabel: "Xatolar",
+  issueWhatLabel: "Nima bo‘ldi",
+  issueWhyLabel: "Sabab",
+  issueNextStepLabel: "Keyingi qadam",
+  consoleLabel: "Console chiqishi",
+  noConsoleOutput: "Console chiqishi yo‘q.",
+  runtimeErrorsLabel: "Bajarilish xatolari",
+  noRuntimeErrors: "Bajarilish xatosiz yakunlandi.",
   tabMission: "Shart",
   tabEditor: "Muharrir",
   tabPreview: "Natija",
   missionTabsLabel: "Missiya paneli bo‘limlari",
+
+  // Muvaffaqiyat va refleksiya.
+  successTitle: "Missiya muvaffaqiyatli bajarildi!",
+  successXpMessage: "Tajriba balli",
+  badgeEarned: "Yangi nishon qo‘lga kiritildi!",
+  reflectionQuestionLabel: "Refleksiya savoli",
+  reflectionPlaceholder: "Natijani o‘z so‘zlaring bilan izohlab yozing.",
+  completionInfo:
+    "Ishni bajarildi. Xaritaga qaytib keyingi missiyani ochishingiz mumkin.",
+  nextMission: "Keyingi missiya:",
+  runPending: "Ishga tushirilmoqda…",
+
+  // Qayta tiklash tasdiqi (modal).
+  resetConfirmTitle: "Kodni qayta tiklash?",
+  resetConfirmBody:
+    "Muharrirdagi barcha o‘zgarishlar boshlang‘ich kod bilan almashtiriladi. Amalni bekor qilishingiz mumkin.",
+  confirmReset: "Ha, qayta tiklash",
+  cancel: "Bekor qilish",
+
+  // Validator uch bosqichli xabarlari (what/why/nextStep).
+  issueWhyStructural:
+    "Sahifa tuzilmasida kerakli element mavjud emas yoki noto‘g‘ri joyda.",
+  issueWhyValue:
+    "Elementning matni yoki qiymati kutilgan shartga mos kelmadi.",
+  issueWhyVisual:
+    "Elementning ko‘rinishi (stili) kutilgan shartga mos kelmadi.",
+  issueWhyBehavioral:
+    "Amal bajarilgach bashorat qilingan o‘zgarish sodir bo‘lmadi.",
+  issueWhyEducational:
+    "O‘quvchi uchun kerakli tushuncha to‘liq ifodalanganini ko‘ra olmadik.",
+  issueWhySandbox:
+    "Kod xavfsizlik qoidalarini buzdi yoki sandbox chegarasidan oshib ketdi.",
+  issueNextStructural:
+    "Qadamlar ro‘yxatini qayta ko‘rib chiq, kerakli tegni qo‘sh va „Ishga tushirish“ni bos.",
+  issueNextValue:
+    "Elementning matni/atributini tekshirib, aynan kutilgan qiymatni qo‘y va qayta ishga tushir.",
+  issueNextVisual:
+    "CSS qoidasini o‘zgartirib, kutilgan ko‘rinishni ta’minla va qayta ishga tushir.",
+  issueNextBehavioral:
+    "Bosish/amal uchun kerakli JS tinglovchini bog‘la va qayta ishga tushir.",
+  issueNextEducational:
+    "Refleksiya savoliga javob yozib, o‘z so‘zlaring bilan izohla.",
+  issueNextSandbox:
+    "Kodni soddalashtirib, taqiqlangan amallardan foydalanmaslikka harakat qil va qayta ishga tushir.",
+
+  // Xavfsizlik (sandbox runtime) xabarlari.
+  sandboxBlockedEval:
+    "Xavfsizlik: eval va Function konstruktori bu sandboxda taqiqlangan.",
+  sandboxBlockedNetwork:
+    "Xavfsizlik: tarmoq so‘rovlari (fetch/XHR/WebSocket) bu sandboxda taqiqlangan.",
+  sandboxBlockedWorker:
+    "Xavfsizlik: Worker yaratish bu sandboxda taqiqlangan.",
+  sandboxBlockedStorage:
+    "Xavfsizlik: localStorage/sessionStorage bu sandboxda taqiqlangan.",
+  sandboxBlockedParent:
+    "Xavfsizlik: ota-oyna (parent/top) bilan bog‘lanish bu sandboxda taqiqlangan.",
+  sandboxBlockedOpen:
+    "Xavfsizlik: yangi oyna ochish (window.open) bu sandboxda taqiqlangan.",
+
+  // Limitlar.
+  limitCodeTooLarge:
+    "Kod juda katta. Jami kod 100 KB dan oshmasligi kerak.",
+  limitTooManyRuns:
+    "Juda tez ishga tushirding. Bir daqiqada ko‘pi bilan 20 marta ishga tushirish mumkin.",
+  limitTimeout:
+    "Bajarilish 2 soniyadan oshib ketdi: kod cheksiz tsikl yoki juda og‘ir amalni o‘z ichiga olgan bo‘lishi mumkin.",
+  limitDomFlood:
+    "DOM elementlar soni chegaradan oshdi — natija kesildi.",
+  limitConsoleFlood: "Console chiqishi chegaradan oshdi — natija kesildi.",
+  limitSandboxFlood:
+    "Natija kesildi: DOM yoki console chiqishi juda katta bo‘ldi.",
+  previewNotReady:
+    "Preview hali chizilmagan. Qayta ishga tushirib ko‘ring.",
 
   // Sozlamalar paneli.
   settingsTitle: "Sozlamalar",
@@ -127,4 +219,7 @@ export const uzMessages = {
   ): string => `${order}-missiya: ${title}. Holati: ${statusLabel}`,
   missionRegionHeading: (regionTitle: string): string =>
     `Hudud: ${regionTitle}`,
+  resetConfirmMessage: (missionTitle: string): string =>
+    `„${missionTitle}“ missiyasining boshlang‘ich kodiga qaytishni tasdiqlaysizmi?`,
+  nextMissionButton: (title: string): string => `Keyingi missiya: ${title}`,
 } as const;

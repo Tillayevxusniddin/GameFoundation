@@ -7,16 +7,23 @@ import { createEventBridge, type EventBridge } from "./eventBridge";
 import { createStateMachine, type StateMachine } from "./stateMachine";
 import { LocalProgressRepository } from "../progress/LocalProgressRepository";
 import type {
+  DraftCode,
   LessonStatus,
   PlayerProgress,
   ProgressRepository,
 } from "../types/progress";
 import type { GameEventMap, GameState } from "../types/game";
+import type { CodeRunner } from "../types/sandbox";
+import { SandboxRunner } from "../security/sandboxRunner";
 import { lessonRegistry } from "../content/loader";
 import { uz } from "../i18n/uz";
 import { TopNav } from "../ui/TopNav";
 import { MapView } from "../ui/MapView";
-import { MissionIntro, MissionWorkspace } from "../ui/MissionView";
+import {
+  MissionIntro,
+  MissionWorkspace,
+  type EditorMode,
+} from "../ui/MissionView";
 import { SettingsPanel } from "../ui/SettingsPanel";
 import type { GameFactory } from "../game/PhaserGame";
 
@@ -24,6 +31,8 @@ export interface AppProps {
   repository?: ProgressRepository;
   bridge?: EventBridge<GameEventMap>;
   gameFactory?: GameFactory;
+  runner?: CodeRunner;
+  editorMode?: EditorMode;
 }
 
 function downloadJson(json: string): void {
@@ -43,6 +52,8 @@ export function App({
   repository: providedRepository,
   bridge: providedBridge,
   gameFactory,
+  runner: providedRunner,
+  editorMode: providedEditorMode,
 }: AppProps): JSX.Element {
   const repository = useMemo<ProgressRepository>(
     () => providedRepository ?? new LocalProgressRepository(),
@@ -52,6 +63,11 @@ export function App({
     () => providedBridge ?? createEventBridge(),
     [providedBridge],
   );
+  const runner = useMemo<CodeRunner>(
+    () => providedRunner ?? new SandboxRunner(),
+    [providedRunner],
+  );
+  const editorMode: EditorMode = providedEditorMode ?? "codemirror";
   const machineRef = useRef<StateMachine>(createStateMachine("loading"));
 
   const [gameState, setGameState] = useState<GameState>("loading");
@@ -177,6 +193,62 @@ export function App({
   const activeManifest =
     activeLessonId === null ? undefined : lessonRegistry.get(activeLessonId);
 
+  const activeProgress =
+    activeLessonId === null
+      ? undefined
+      : progress.lessons[activeLessonId];
+
+  const initialHintsUsed = activeProgress?.hintsUsed ?? 0;
+
+  const initialDraft = useMemo<DraftCode>((): DraftCode => {
+    if (activeManifest === undefined) {
+      return { html: "", css: "", javascript: "" };
+    }
+    const saved = progress.lessons[activeManifest.id]?.draftCode;
+    const starter = activeManifest.starterCode;
+    return {
+      html: saved !== undefined && saved.html.length > 0 ? saved.html : starter.html,
+      css: saved !== undefined && saved.css.length > 0 ? saved.css : starter.css,
+      javascript:
+        saved !== undefined && saved.javascript.length > 0
+          ? saved.javascript
+          : starter.javascript,
+    };
+  }, [activeManifest, progress]);
+
+  const nextManifest =
+    activeManifest?.nextLessonId === undefined
+      ? undefined
+      : lessonRegistry.get(activeManifest.nextLessonId);
+
+  const handleSaveDraft = useCallback(
+    (lessonId: string, draft: DraftCode): void => {
+      setProgress(repository.saveDraft(lessonId, draft));
+    },
+    [repository],
+  );
+
+  const handleComplete = useCallback(
+    (lessonId: string, hintsUsed: number): void => {
+      const manifest = lessonRegistry.get(lessonId);
+      const next = repository.completeLesson(lessonId, hintsUsed, manifest?.badgeId);
+      setProgress(next);
+      const gainedXp = hintsUsed > 0 ? 80 : 100;
+      bridge.emit("mission:completed", { lessonId, xp: gainedXp });
+    },
+    [repository, bridge],
+  );
+
+  const handleOpenNextMission = useCallback((): void => {
+    const nextId = activeManifest?.nextLessonId;
+    if (nextId === undefined) {
+      return;
+    }
+    setActiveLessonId(nextId);
+    setSelectedLessonId(nextId);
+    bridge.emit("map:mission-selected", { lessonId: nextId });
+  }, [activeManifest, bridge]);
+
   return (
     <div className="wn-app">
       <TopNav
@@ -216,7 +288,28 @@ export function App({
         ) : null}
 
         {gameState === "coding" && activeManifest !== undefined ? (
-          <MissionWorkspace manifest={activeManifest} />
+          <MissionWorkspace
+            key={activeLessonId ?? "unknown"}
+            manifest={activeManifest}
+            initialDraft={initialDraft}
+            initialHintsUsed={initialHintsUsed}
+            runner={runner}
+            editorMode={editorMode}
+            onSaveDraft={(draft): void => {
+              if (activeLessonId !== null) {
+                handleSaveDraft(activeLessonId, draft);
+              }
+            }}
+            onComplete={(hintsUsed): void => {
+              if (activeLessonId !== null) {
+                handleComplete(activeLessonId, hintsUsed);
+              }
+            }}
+            onBackToMap={handleBackToMap}
+            onOpenNextMission={
+              nextManifest !== undefined ? handleOpenNextMission : undefined
+            }
+          />
         ) : null}
 
         {gameState === "loading" ? (

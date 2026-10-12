@@ -495,6 +495,273 @@ body {
   font-size: 0.9rem;
 }
 
+/* Phase 3: muharrir, preview, validator, maslahat va muvaffaqiyat */
+.wn-pane__subtitle {
+  margin: 12px 0 6px;
+  font-size: 0.85rem;
+  color: var(--wn-muted);
+}
+
+.wn-editor-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wn-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wn-lang-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.wn-lang-tab {
+  padding: 5px 10px;
+  background: var(--wn-panel-2);
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.wn-lang-tab[aria-pressed="true"] {
+  background: var(--wn-primary);
+  border-color: #6aa3ea;
+  font-weight: 600;
+}
+
+.wn-code-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wn-code-stack__title {
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  color: var(--wn-muted);
+}
+
+.wn-sandbox-wrap {
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.wn-sandbox {
+  width: 100%;
+  min-height: 200px;
+  border: 0;
+  display: block;
+  background: #ffffff;
+}
+
+.wn-console {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  max-height: 140px;
+  overflow: auto;
+  background: #0f1219;
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
+.wn-console__line {
+  display: flex;
+  gap: 8px;
+}
+
+.wn-console__level {
+  color: var(--wn-muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  min-width: 44px;
+}
+
+.wn-console__line--warn .wn-console__text {
+  color: #f0c674;
+}
+
+.wn-console__line--error .wn-console__text {
+  color: #f08080;
+}
+
+.wn-console__empty {
+  margin: 0;
+  color: var(--wn-muted);
+  font-size: 0.85rem;
+}
+
+.wn-validator {
+  padding: 10px;
+  background: var(--wn-panel-2);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+}
+
+.wn-validator--success {
+  border-color: #3f7d54;
+  background: #16301f;
+}
+
+.wn-validator__title {
+  margin: 0 0 8px;
+  color: #f0a0a0;
+}
+
+.wn-validator__success {
+  margin: 0;
+  color: #9be0b0;
+}
+
+.wn-validator__runtime {
+  margin: 0 0 8px;
+  color: #f0c674;
+}
+
+.wn-issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wn-issue__what {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.wn-issue__detail {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--wn-muted);
+}
+
+.wn-issue__detail dt {
+  font-weight: 600;
+  color: var(--wn-text);
+}
+
+.wn-issue__detail dd {
+  margin: 0 0 4px;
+}
+
+.wn-success {
+  padding: 12px;
+  background: #16301f;
+  border: 1px solid #3f7d54;
+  border-radius: 8px;
+}
+
+.wn-success__title {
+  margin: 0 0 8px;
+  color: #9be0b0;
+}
+
+.wn-success__xp {
+  font-weight: 600;
+}
+
+.wn-success__badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--wn-primary);
+  border-radius: 999px;
+  font-size: 0.82rem;
+}
+
+.wn-success__question {
+  font-style: italic;
+}
+
+.wn-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.wn-sr-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--wn-muted);
+  margin: 10px 0 6px;
+}
+
+.wn-reflection {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  padding: 10px;
+  background: #0f1219;
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+
+.wn-run-hints {
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: var(--wn-muted);
+}
+
+.wn-editor-error-line {
+  background: rgba(240, 128, 128, 0.18);
+}
+
+.wn-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 60;
+}
+
+.wn-confirm {
+  width: min(420px, 100%);
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.wn-confirm__title {
+  margin-top: 0;
+}
+
+.wn-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.wn-btn--danger {
+  background: #7a2b2b;
+  border-color: #a54444;
+}
+
+.wn-btn--danger:hover {
+  background: #8f3333;
+}
+
 /* Missiyaga kirish */
 .wn-intro {
   max-width: 720px;

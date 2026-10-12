@@ -38,7 +38,13 @@ function renderApp(): { container: HTMLElement } {
     createMemoryStorage(),
     () => FIXED_NOW,
   );
-  return render(<App repository={repository} gameFactory={stubGameFactory} />);
+  return render(
+    <App
+      repository={repository}
+      gameFactory={stubGameFactory}
+      editorMode="plain"
+    />,
+  );
 }
 
 afterEach(() => {

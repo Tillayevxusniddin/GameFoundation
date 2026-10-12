@@ -1,10 +1,32 @@
-// docs/05_UI_UX_DESIGN.md — desktopda chap (shart), markaz (muharrir), o'ng
-// (preview/validator); 1024 px va kichikda tab rejimiga o'tadi.
-// docs/11 — preview/validator xabarlari aria-live orqali e'lon qilinadi.
+// docs/05_UI_UX_DESIGN.md — chap (shart), markaz (muharrir), o'ng (preview +
+// validator) uchlik; 1024 px va kichikda tab rejimi. Preview/validator xabarlari
+// aria-live orqali e'lon qilinadi.
+// docs/03_CURRICULUM.md — uch bosqichli maslahat yon panelda ochiladi.
 
-import { useState } from "react";
-import type { LessonManifest } from "../types/content";
-import { uz } from "../i18n/uz";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
+import type {
+  LessonManifest,
+  ValidationIssue,
+  ValidationResult,
+} from "../types/content";
+import type { DraftCode } from "../types/progress";
+import type {
+  CodeRunner,
+  SandboxConsoleEntry,
+  SandboxRunRequest,
+} from "../types/sandbox";
+import { compileProbes } from "../validation/probes";
+import { validateLesson } from "../validation/engine";
+import { CodeEditor, PlainTextArea } from "../editor/CodeEditor";
+import type { LanguageId } from "../editor/languages";
+import { SandboxPreview } from "./SandboxPreview";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { uz, uzMessages } from "../i18n/uz";
 
 export interface MissionIntroProps {
   manifest: LessonManifest;
@@ -52,30 +74,197 @@ export function MissionIntro({
 }
 
 export type MissionTab = "mission" | "editor" | "preview";
+export type EditorMode = "codemirror" | "plain";
 
 export interface MissionWorkspaceProps {
   manifest: LessonManifest;
+  initialDraft: DraftCode;
+  initialHintsUsed: number;
+  runner: CodeRunner;
+  editorMode: EditorMode;
+  onSaveDraft: (draft: DraftCode) => void;
+  onComplete: (hintsUsed: number) => void;
+  onBackToMap: () => void;
+  onOpenNextMission?: () => void;
 }
 
 const HINT_KEYS = [uz.hintLevel1, uz.hintLevel2, uz.hintLevel3] as const;
 
+type CodeLanguage = "html" | "css" | "javascript";
+
+const LANGUAGE_ORDER: readonly CodeLanguage[] = [
+  "html",
+  "css",
+  "javascript",
+];
+
+function languageLabel(language: LanguageId): string {
+  switch (language) {
+    case "html":
+      return "HTML";
+    case "css":
+      return "CSS";
+    case "javascript":
+      return "JavaScript";
+    case "plain":
+      return "Text";
+  }
+}
+
+function starterFor(manifest: LessonManifest): DraftCode {
+  return {
+    html: manifest.starterCode.html,
+    css: manifest.starterCode.css,
+    javascript: manifest.starterCode.javascript,
+  };
+}
+
+function errorResult(
+  lessonId: string,
+  message: string,
+): ValidationResult {
+  const issue: ValidationIssue = {
+    ruleId: "sandbox",
+    what: message,
+    why: uz.issueWhySandbox,
+    nextStep: uz.issueNextSandbox,
+  };
+  return {
+    success: false,
+    lessonId,
+    issues: [issue],
+    checkedAt: new Date().toISOString(),
+  };
+}
+
 export function MissionWorkspace({
   manifest,
+  initialDraft,
+  initialHintsUsed,
+  runner,
+  editorMode,
+  onSaveDraft,
+  onComplete,
+  onBackToMap,
+  onOpenNextMission,
 }: MissionWorkspaceProps): JSX.Element {
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [activeTab, setActiveTab] = useState<MissionTab>("mission");
+  const [draft, setDraft] = useState<DraftCode>(initialDraft);
+  const [activeLanguage, setActiveLanguage] = useState<CodeLanguage>("html");
+  const [runState, setRunState] = useState<"idle" | "running" | "error" | "success">(
+    "idle",
+  );
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [runtimeError, setRuntimeError] = useState<string | null>(null);
+  const [consoleLines, setConsoleLines] = useState<SandboxConsoleEntry[]>([]);
   const [revealedHints, setRevealedHints] = useState<boolean[]>([
     false,
     false,
     false,
   ]);
-  const [draft, setDraft] = useState<string>(manifest.starterCode.html);
+  const [hintsUsedCount, setHintsUsedCount] = useState(initialHintsUsed);
+  const [showReset, setShowReset] = useState(false);
+  const [reflectionAnswer, setReflectionAnswer] = useState("");
+
+  const isCombined = manifest.moduleId === "project";
+  const extraLanguages = LANGUAGE_ORDER.filter(
+    (language) => manifest.starterCode[language].trim().length > 0,
+  );
+  const hasMultipleLanguages = extraLanguages.length > 1;
+
+  const runRef = useRef<() => Promise<void>>(async () => {
+    // Bo'sh bosqich; har safar yangilanadi.
+  });
+  const saveDraftRef = useRef<() => void>(() => {});
+  saveDraftRef.current = (): void => {
+    onSaveDraft(draft);
+  };
+
+  const runCode = async (): Promise<void> => {
+    setRunState("running");
+    setRuntimeError(null);
+    setConsoleLines([]);
+    const request: SandboxRunRequest = {
+      lessonId: manifest.id,
+      code: draft,
+      probes: compileProbes(manifest),
+    };
+    const outcome = await runner.run(request, iframeRef.current);
+    if (outcome.status !== "ok" || outcome.snapshot === null) {
+      const message = outcome.message ?? uz.previewNotReady;
+      setRuntimeError(message);
+      setValidation(errorResult(manifest.id, message));
+      setRunState("error");
+      return;
+    }
+    const snapshot = outcome.snapshot;
+    setConsoleLines(snapshot.console);
+    const result = validateLesson(manifest, {
+      code: draft,
+      snapshot,
+    });
+    setValidation(result);
+    if (result.success) {
+      setRunState("success");
+      onComplete(hintsUsedCount);
+    } else {
+      setRunState("error");
+    }
+  };
+  runRef.current = (): Promise<void> => runCode();
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent): void => {
+      const modifier = event.ctrlKey || event.metaKey;
+      if (!modifier) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target !== null && target.closest(".cm-content, textarea")) {
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void runRef.current();
+      } else if (event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        saveDraftRef.current();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return (): void => {
+      window.removeEventListener("keydown", handler);
+    };
+  }, []);
 
   const toggleHint = (index: number): void => {
-    setRevealedHints((previous) =>
-      previous.map((value, position) =>
-        position === index ? !value : value,
-      ),
-    );
+    setRevealedHints((previous) => {
+      const next = [...previous];
+      if (!(next[index] ?? false)) {
+        next[index] = true;
+        setHintsUsedCount((count) => count + 1);
+      } else {
+        next[index] = false;
+      }
+      return next;
+    });
+  };
+
+  const handleResetConfirm = (): void => {
+    const starter = starterFor(manifest);
+    setDraft(starter);
+    setRunState("idle");
+    setValidation(null);
+    setRuntimeError(null);
+    setConsoleLines([]);
+    setShowReset(false);
+    onSaveDraft(starter);
+  };
+
+  const updateLanguage = (language: CodeLanguage, value: string): void => {
+    const nextDraft: DraftCode = { ...draft, [language]: value };
+    setDraft(nextDraft);
   };
 
   const tabs: readonly { id: MissionTab; label: string }[] = [
@@ -83,6 +272,174 @@ export function MissionWorkspace({
     { id: "editor", label: uz.tabEditor },
     { id: "preview", label: uz.tabPreview },
   ];
+
+  const editorProps = (language: CodeLanguage) => ({
+    value: draft[language],
+    language,
+    onChange: (value: string): void => updateLanguage(language, value),
+    onRun: (): void => void runRef.current(),
+    onSaveDraft: (): void => saveDraftRef.current(),
+    errorLine: null,
+    ariaLabel: `${uz.editorPaneLabel} - ${languageLabel(language)}`,
+  });
+
+  const renderEditors = (): JSX.Element => {
+    if (isCombined) {
+      return (
+        <div className="wn-code-stack">
+          {extraLanguages.map((language) => (
+            <div key={language} className="wn-code-stack__item">
+              <h3 className="wn-code-stack__title">{languageLabel(language)}</h3>
+              {editorMode === "codemirror" ? (
+                <CodeEditor {...editorProps(language)} />
+              ) : (
+                <PlainTextArea
+                  value={draft[language]}
+                  ariaLabel={`${uz.editorPaneLabel} - ${languageLabel(language)}`}
+                  onChange={(value: string): void =>
+                    updateLanguage(language, value)
+                  }
+                  onKeyDown={handlePlainShortcut}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return editorMode === "codemirror" ? (
+      <CodeEditor {...editorProps(activeLanguage)} />
+    ) : (
+      <PlainTextArea
+        value={draft[activeLanguage]}
+        ariaLabel={uz.editorPaneLabel}
+        onChange={(value: string): void =>
+          updateLanguage(activeLanguage, value)
+        }
+        onKeyDown={handlePlainShortcut}
+      />
+    );
+  };
+
+  function handlePlainShortcut(
+    event: ReactKeyboardEvent<HTMLTextAreaElement>,
+  ): void {
+    const modifier = event.ctrlKey || event.metaKey;
+    if (!modifier) {
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void runRef.current();
+    } else if (event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      saveDraftRef.current();
+    }
+  }
+
+  const renderValidatorReport = (): JSX.Element => {
+    if (runState === "idle") {
+      return (
+        <p className="wn-validator__placeholder">{uz.previewEmpty}</p>
+      );
+    }
+    if (runState === "running") {
+      return <p role="status">{uz.runPending}</p>;
+    }
+    if (runState === "success" && validation !== null) {
+      return (
+        <div className="wn-validator wn-validator--success" role="status">
+          <p className="wn-validator__success">{uz.validatorSuccess}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="wn-validator" role="status">
+        <h3 className="wn-validator__title">{uz.validatorFailedTitle}</h3>
+        {runtimeError !== null ? (
+          <p className="wn-validator__runtime" role="alert">
+            {runtimeError}
+          </p>
+        ) : null}
+        {validation !== null ? (
+          <ul className="wn-issues">
+            {validation.issues.map((issue) => (
+              <li key={issue.ruleId} className="wn-issue">
+                <p className="wn-issue__what">{issue.what}</p>
+                <dl className="wn-issue__detail">
+                  <dt>{uz.issueWhyLabel}</dt>
+                  <dd>{issue.why}</dd>
+                  <dt>{uz.issueNextStepLabel}</dt>
+                  <dd>{issue.nextStep}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderConsole = (): JSX.Element => {
+    if (consoleLines.length === 0) {
+      return <p className="wn-console__empty">{uz.noConsoleOutput}</p>;
+    }
+    return (
+      <ul className="wn-console">
+        {consoleLines.map((entry, index) => (
+          <li key={`${index}-${entry.level}`} className={`wn-console__line wn-console__line--${entry.level}`}>
+            <span className="wn-console__level">{entry.level}</span>
+            <span className="wn-console__text">{entry.text}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderSuccessPanel = (): JSX.Element | null => {
+    if (runState !== "success") {
+      return null;
+    }
+    const badge = manifest.badgeId !== undefined;
+    const next = manifest.nextLessonId;
+    return (
+      <div className="wn-success" role="status" aria-live="polite">
+        <h3 className="wn-success__title">{uz.successTitle}</h3>
+        <p>{manifest.successMessage}</p>
+        <p className="wn-success__xp">
+          {uz.successXpMessage}:{" "}
+          <strong>{hintsUsedCount > 0 ? 80 : 100}</strong> XP
+        </p>
+        {badge ? <p className="wn-success__badge">{uz.badgeEarned}</p> : null}
+        <h4>{uz.reflectionQuestionLabel}</h4>
+        <p className="wn-success__question">{manifest.reflectionQuestion}</p>
+        <label className="wn-sr-label" htmlFor="wn-reflection">
+          {uz.reflectionPlaceholder}
+        </label>
+        <textarea
+          id="wn-reflection"
+          className="wn-reflection"
+          value={reflectionAnswer}
+          placeholder={uz.reflectionPlaceholder}
+          onChange={(event): void => setReflectionAnswer(event.target.value)}
+        />
+        <div className="wn-success__actions">
+          {next !== undefined && onOpenNextMission !== undefined ? (
+            <button
+              type="button"
+              className="wn-btn wn-btn--primary"
+              onClick={onOpenNextMission}
+            >
+              {uzMessages.nextMissionButton(next)}
+            </button>
+          ) : null}
+          <button type="button" className="wn-btn" onClick={onBackToMap}>
+            {uz.backToMap}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section
@@ -129,7 +486,9 @@ export function MissionWorkspace({
             ))}
           </ol>
           <h3>{uz.missionHintsLabel}</h3>
-          <p className="wn-hint-note">{uz.hintCostNote}</p>
+          <p className="wn-hint-note">
+            {uz.hintCostNote} {uz.hintsUsedLabel}: {hintsUsedCount}
+          </p>
           <ul className="wn-hints">
             {manifest.hints.map((hint, index) => {
               const revealed = revealedHints[index] ?? false;
@@ -149,6 +508,11 @@ export function MissionWorkspace({
               );
             })}
           </ul>
+          <p className="wn-run-hints">
+            {uz.runRequestsHint}
+            <br />
+            {uz.saveRequestsHint}
+          </p>
         </article>
 
         <article
@@ -159,18 +523,52 @@ export function MissionWorkspace({
           aria-label={uz.editorPaneLabel}
         >
           <h2 className="wn-pane__title">{uz.editorPaneLabel}</h2>
-          <label className="wn-editor-label" htmlFor="wn-editor">
-            {uz.editorPaneLabel}
-          </label>
-          <textarea
-            id="wn-editor"
-            className="wn-editor"
-            value={draft}
-            spellCheck={false}
-            placeholder={uz.editorPlaceholder}
-            onChange={(event): void => setDraft(event.target.value)}
-          />
-          <p className="wn-editor-note">{uz.editorPlaceholder}</p>
+          {!isCombined && hasMultipleLanguages ? (
+            <div
+              className="wn-lang-tabs"
+              role="group"
+              aria-label={uz.editorLanguageLabel}
+            >
+              {extraLanguages.map((language) => (
+                <button
+                  key={language}
+                  type="button"
+                  className="wn-lang-tab"
+                  aria-pressed={activeLanguage === language}
+                  onClick={(): void => setActiveLanguage(language)}
+                >
+                  {languageLabel(language)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <div className="wn-editor-wrap">
+            {renderEditors()}
+          </div>
+          <div className="wn-editor-actions">
+            <button
+              type="button"
+              className="wn-btn wn-btn--primary"
+              disabled={runState === "running"}
+              onClick={(): void => void runRef.current()}
+            >
+              {uz.runCode}
+            </button>
+            <button
+              type="button"
+              className="wn-btn"
+              onClick={saveDraftRef.current}
+            >
+              {uz.saveDraft}
+            </button>
+            <button
+              type="button"
+              className="wn-btn"
+              onClick={(): void => setShowReset(true)}
+            >
+              {uz.resetCode}
+            </button>
+          </div>
         </article>
 
         <article
@@ -182,11 +580,24 @@ export function MissionWorkspace({
         >
           <h2 className="wn-pane__title">{uz.previewPaneLabel}</h2>
           <div className="wn-preview" aria-live="polite" aria-atomic="true">
-            <p className="wn-preview__placeholder">{uz.previewPlaceholder}</p>
-            <p className="wn-validator__placeholder">{uz.validatorPlaceholder}</p>
+            <SandboxPreview iframeRef={iframeRef} />
+            <h3 className="wn-pane__subtitle">{uz.consoleLabel}</h3>
+            {renderConsole()}
+            <h3 className="wn-pane__subtitle">{uz.validatorReportLabel}</h3>
+            {renderValidatorReport()}
+            {renderSuccessPanel()}
           </div>
         </article>
       </div>
+
+      {showReset ? (
+        <ConfirmDialog
+          title={uz.resetConfirmTitle}
+          body={uzMessages.resetConfirmMessage(manifest.title)}
+          onConfirm={handleResetConfirm}
+          onCancel={(): void => setShowReset(false)}
+        />
+      ) : null}
     </section>
   );
 }

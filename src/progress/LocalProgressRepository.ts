@@ -262,7 +262,11 @@ export class LocalProgressRepository implements ProgressRepository {
     }
   }
 
-  completeLesson(lessonId: string, hintsUsed: number): PlayerProgress {
+  completeLesson(
+    lessonId: string,
+    hintsUsed: number,
+    badgeId?: string,
+  ): PlayerProgress {
     const current = this.load();
     const next: PlayerProgress = clone(current);
     const lesson = next.lessons[lessonId];
@@ -275,6 +279,13 @@ export class LocalProgressRepository implements ProgressRepository {
     lesson.hintsUsed = Math.max(lesson.hintsUsed, Math.max(0, hintsUsed));
     lesson.status = "completed";
     lesson.updatedAt = this.now();
+    if (
+      badgeId !== undefined &&
+      badgeId.trim().length > 0 &&
+      !next.badges.includes(badgeId)
+    ) {
+      next.badges.push(badgeId);
+    }
     const index = LESSON_IDS.indexOf(lessonId);
     if (index >= 0) {
       const nextId = LESSON_IDS[index + 1];

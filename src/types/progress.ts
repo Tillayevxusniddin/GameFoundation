@@ -33,7 +33,12 @@ export interface ProgressRepository {
   load(): PlayerProgress;
   save(progress: PlayerProgress): void;
   clear(): void;
-  completeLesson(lessonId: string, hintsUsed: number): PlayerProgress;
+  // Modul tugaganda badgeId berilad (takrorlanmaydi).
+  completeLesson(
+    lessonId: string,
+    hintsUsed: number,
+    badgeId?: string,
+  ): PlayerProgress;
   saveDraft(lessonId: string, draft: DraftCode): PlayerProgress;
   exportJson(): string;
   importJson(json: string): PlayerProgress;
