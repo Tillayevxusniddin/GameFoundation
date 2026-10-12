@@ -12,6 +12,28 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        // docs/12_MVP_ROADMAP.md — Phaser va CodeMirror alohida vendor
+        // chunk'larga ajratiladi; asosiy bundle yengil qoladi.
+        manualChunks(id: string): string | undefined {
+          if (!id.includes("node_modules")) {
+            return undefined;
+          }
+          if (id.includes("phaser")) {
+            return "vendor-phaser";
+          }
+          if (
+            id.includes("@codemirror") ||
+            id.includes("/codemirror/") ||
+            id.includes("@lezer")
+          ) {
+            return "vendor-codemirror";
+          }
+          return undefined;
+        },
+      },
+    },
   },
   test: {
     environment: "jsdom",
