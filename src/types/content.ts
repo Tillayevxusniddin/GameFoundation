@@ -58,6 +58,7 @@ export interface LessonManifest {
   validation: ValidationRule[];
   commonErrors: CommonError[];
   successMessage: string;
+  reflectionQuestion: string;
   rewardXp: number;
   badgeId?: string;
   nextLessonId?: string;

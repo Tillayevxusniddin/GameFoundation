@@ -1,0 +1,618 @@
+/* docs/05_UI_UX_DESIGN.md — fokus halqasi, responsive panellar, kontrast.
+   docs/11_ACCESSIBILITY_AND_LOCALIZATION.md — prefers-reduced-motion hurmat. */
+
+:root {
+  color-scheme: dark;
+  --wn-bg: #0d0f16;
+  --wn-panel: #171b26;
+  --wn-panel-2: #1f2432;
+  --wn-border: #2c3346;
+  --wn-text: #e8ecf7;
+  --wn-muted: #a9b2c8;
+  --wn-primary: #3f7fd4;
+  --wn-focus: #ffd75e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--wn-bg);
+  color: var(--wn-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--wn-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.wn-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wn-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navigatsiya */
+.wn-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--wn-panel);
+  border-bottom: 1px solid var(--wn-border);
+}
+
+.wn-nav__brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.wn-nav__spacer {
+  flex: 1 1 auto;
+}
+
+.wn-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: var(--wn-panel-2);
+  border: 1px solid var(--wn-border);
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.wn-stat__value {
+  font-weight: 700;
+}
+
+.wn-stat__unit {
+  color: var(--wn-muted);
+  font-size: 0.8rem;
+}
+
+.wn-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.wn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  background: var(--wn-panel-2);
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.wn-btn:hover {
+  background: #262c3c;
+}
+
+.wn-btn--primary {
+  background: var(--wn-primary);
+  border-color: #6aa3ea;
+  font-weight: 600;
+}
+
+.wn-btn--primary:hover {
+  background: #4f8fe0;
+}
+
+.wn-btn--icon {
+  padding: 6px;
+}
+
+.wn-btn--hint {
+  background: transparent;
+  border-style: dashed;
+  text-align: left;
+}
+
+/* Main */
+.wn-main {
+  flex: 1 1 auto;
+  padding: 16px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.wn-banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  background: #4a2a12;
+  border: 1px solid #b8792f;
+  border-radius: 8px;
+}
+
+.wn-loading {
+  color: var(--wn-muted);
+}
+
+/* Xarita rejimi */
+.wn-map {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.wn-map__stage {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wn-phaser {
+  position: relative;
+  width: 100%;
+  background: #11131a;
+  border: 1px solid var(--wn-border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wn-phaser__canvas canvas {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.wn-phaser__fallback {
+  padding: 24px;
+  color: var(--wn-muted);
+  text-align: center;
+}
+
+.wn-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(2, 52px);
+  gap: 6px;
+  justify-content: center;
+}
+
+.wn-dpad__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wn-panel-2);
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.wn-dpad__btn--up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.wn-dpad__btn--left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.wn-dpad__btn--down {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.wn-dpad__btn--right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.wn-map__side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wn-map__side-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.wn-region-list,
+.wn-mission-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wn-region-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wn-region {
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.wn-region__title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  color: var(--wn-muted);
+}
+
+.wn-mission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wn-mission-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--wn-panel-2);
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-left-width: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.wn-mission-btn--locked {
+  border-left-color: #8a90a6;
+  color: var(--wn-muted);
+}
+
+.wn-mission-btn--available {
+  border-left-color: #7fe0a5;
+}
+
+.wn-mission-btn--in_progress {
+  border-left-color: #ffcf7a;
+}
+
+.wn-mission-btn--completed {
+  border-left-color: #9cc9ff;
+}
+
+.wn-mission-btn__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2a3040;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.wn-mission-btn__title {
+  flex: 1 1 auto;
+}
+
+.wn-mission-btn__status {
+  font-size: 0.78rem;
+  color: var(--wn-muted);
+}
+
+.wn-map__info {
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.wn-map__info-title {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.wn-map__mission-title {
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.wn-map__mission-objective,
+.wn-map__mission-prereq {
+  color: var(--wn-muted);
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+}
+
+.wn-map__locked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  background: #3a2a2a;
+  border: 1px solid #8a5a5a;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* Missiya rejimi */
+.wn-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wn-tabs {
+  display: none;
+  gap: 6px;
+}
+
+.wn-tab {
+  flex: 1 1 0;
+  padding: 8px;
+  background: var(--wn-panel-2);
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.wn-tab[aria-selected="true"] {
+  background: var(--wn-primary);
+  border-color: #6aa3ea;
+  font-weight: 600;
+}
+
+.wn-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.wn-pane {
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.wn-pane__title {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+.wn-pane h3 {
+  font-size: 0.9rem;
+  color: var(--wn-muted);
+  margin: 14px 0 6px;
+}
+
+.wn-steps {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.wn-hints {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wn-hint-note {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: var(--wn-muted);
+}
+
+.wn-hint__text {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--wn-panel-2);
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.wn-editor-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--wn-muted);
+  margin-bottom: 6px;
+}
+
+.wn-editor {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  padding: 10px;
+  background: #0f1219;
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+}
+
+.wn-editor-note {
+  font-size: 0.8rem;
+  color: var(--wn-muted);
+}
+
+.wn-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 320px;
+}
+
+.wn-preview__placeholder,
+.wn-validator__placeholder {
+  margin: 0;
+  padding: 10px;
+  background: var(--wn-panel-2);
+  border: 1px dashed var(--wn-border);
+  border-radius: 8px;
+  color: var(--wn-muted);
+  font-size: 0.9rem;
+}
+
+/* Missiyaga kirish */
+.wn-intro {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.wn-intro__title {
+  margin-top: 0;
+}
+
+.wn-intro h3 {
+  font-size: 0.9rem;
+  color: var(--wn-muted);
+  margin: 16px 0 6px;
+}
+
+.wn-intro__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* Sozlamalar */
+.wn-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.wn-settings {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--wn-panel);
+  border: 1px solid var(--wn-border);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.wn-settings__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wn-settings__head h2 {
+  margin: 0;
+}
+
+.wn-settings__warning {
+  padding: 8px 10px;
+  background: #3a2a12;
+  border: 1px solid #b8792f;
+  border-radius: 8px;
+}
+
+.wn-settings__label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--wn-muted);
+  margin: 10px 0 6px;
+}
+
+.wn-settings__json {
+  width: 100%;
+  min-height: 160px;
+  padding: 10px;
+  background: #0f1219;
+  color: var(--wn-text);
+  border: 1px solid var(--wn-border);
+  border-radius: 8px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+/* Responsive: 1024 px va kichik ekranlarda tab rejimi */
+@media (max-width: 1024px) {
+  .wn-map {
+    grid-template-columns: 1fr;
+  }
+
+  .wn-tabs {
+    display: flex;
+  }
+
+  .wn-panes {
+    display: block;
+  }
+
+  .wn-pane {
+    display: none;
+  }
+
+  .wn-panes--mission .wn-pane--mission,
+  .wn-panes--editor .wn-pane--editor,
+  .wn-panes--preview .wn-pane--preview {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
