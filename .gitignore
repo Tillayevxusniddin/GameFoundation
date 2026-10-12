@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Coverage / test artefacts
+coverage/
+.nyc_output/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Vite cache
+.vite/
+*.tsbuildinfo
+
+# Maxfiy / lokal hujjatlar — GitHub ga push qilinmaydi
+docs/
+future_plans.md
+
+# Hujjatlar IZOH: README.md, CLAUDE.md, src/*, tests/*, public/*
+# GitHub ga push qilinadi; docs/* va future_plans.md yuqoridagi
+# qoida bilan ataylab ignore qilinadi.
